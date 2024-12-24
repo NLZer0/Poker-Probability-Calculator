@@ -1,6 +1,9 @@
 import argparse
 from typing import List
+from collections import Counter
 from const import VALUE_COUNTS, SUITS
+
+import numpy as np
 
 
 class Card:
@@ -80,6 +83,10 @@ class Bord:
         ]
 
 
+def get_card_value_rank(card_value: str):
+    return VALUE_COUNTS[card_value]
+
+
 def senior_card_check(all_cards: List[Card]):
     senior_card = None
     senior_card_rank = 0
@@ -89,6 +96,34 @@ def senior_card_check(all_cards: List[Card]):
             senior_card = card
     return senior_card_rank, senior_card
     
+
+def pair_check(all_cards: List[Card]):
+    counter = Counter([card.value for card in all_cards])
+    pair_cards = np.array([item for item, value in counter.items() if value == 2])
+    pair_rank = np.array([get_card_value_rank(it) for it in pair_cards])
+    
+    if len(pair_cards) == 1:
+        pair_rank = pair_rank[0] + get_card_value_rank('A')
+        pair_cards = [it for it in all_cards if it.value == pair_cards[0]]
+        assert len(pair_cards) == 2, 'Ошибка при подсчете пар'
+        return pair_rank, pair_cards
+
+    if len(pair_cards) >= 2:
+        max_rank_pairs = np.argsort(-1*pair_rank)[:2]
+        pair_cards = pair_cards[max_rank_pairs]
+        pair_rank = pair_rank[max_rank_pairs]
+        
+        c1_rank = str(pair_rank[0])
+        c2_rank = str(pair_rank[1])
+        c1_rank = f'0{c1_rank}' if len(c1_rank) == 1 else c1_rank
+        c2_rank = f'0{c2_rank}' if len(c2_rank) == 1 else c2_rank
+        
+        pair_rank = int(c1_rank+c2_rank)
+        pair_cards = [it for it in all_cards if (it.value == pair_cards[0]) | (it.value == pair_cards[1])]
+        return pair_rank, pair_cards
+    
+    return 0, []
+
 
 def calc_max_combination(hand: Hand, bord: Bord):
     comb_rank = 0
@@ -100,8 +135,13 @@ def calc_max_combination(hand: Hand, bord: Bord):
     senior_card_rank, senior_card = senior_card_check(all_cards)
     if comb_rank < senior_card_rank:
         comb_rank = senior_card_rank
-        comb_cards.add(senior_card)
-    
+        comb_cards = set([senior_card])
+
+    pair_rank, pair_cards = pair_check(all_cards)
+    if comb_rank < pair_rank:
+        comb_cards = pair_cards
+        comb_rank = pair_rank
+
     return comb_rank, comb_cards
 
 
@@ -112,10 +152,10 @@ def parse_card(card_str: str):
 
 
 hand_1 = Hand(card_1=Card('2', 'D'), card_2=Card('2', 'S'))
-hand_2 = Hand(card_1=Card('A', 'D'), card_2=Card('Q', 'S'))
+hand_2 = Hand(card_1=Card('A', 'D'), card_2=Card('A', 'S'))
 bord = Bord(
-    card_1=Card('J', 'D'),
-    card_2=Card('3', 'D')
+    card_1=Card('K', 'D'),
+    card_2=Card('K', 'S')
 )
 
 comb_rank_1, comb_cards_1 = calc_max_combination(hand_1, bord)
@@ -124,7 +164,8 @@ comb_rank_2, comb_cards_2 = calc_max_combination(hand_2, bord)
 print(comb_rank_1)
 for it in comb_cards_1:
     print(it)
-    
+
+print('-'*10)
 print(comb_rank_2)
 for it in comb_cards_2:
     print(it)
