@@ -194,7 +194,7 @@ def calc_max_combination(hand: Hand, bord: Bord):
         kikers_cards = non_usage_cards[:kikers_num]
         kiker_rank = int(''.join([str(get_card_value_rank(it.value)) for it in kikers_cards]))
         
-    return comb_rank, comb_cards, kiker_rank
+    return comb_rank, kiker_rank
 
 
 def parse_card(card_str: str):
@@ -206,12 +206,12 @@ def parse_card(card_str: str):
 def read_test_case(file_name):
     with open(file_name, 'r') as f:
         test_data = f.read()
-        hand_1, hand_2, bord, result = test_data.split('\n')
+        hand_1, hand_2, bord, result = test_data.replace(' ', '').split('\n')
         
-        hand_1 = [Card(list(it)) for it in hand_1.split(',')]
-        hand_2 = [Card(list(it)) for it in hand_2.split(',')]
-        bord = [Card(list(it)) for it in bord.split(',')]
-        result = int(result)
+        hand_1 = [Card(*it.split(':')) for it in hand_1.split(',')]
+        hand_2 = [Card(*it.split(':')) for it in hand_2.split(',')]
+        bord = [Card(*it.split(':')) for it in bord.split(',')]
+        result = [int(it) for it in result.split(',')]
 
         hand_1 = Hand(*hand_1)
         hand_2 = Hand(*hand_2)
@@ -220,42 +220,33 @@ def read_test_case(file_name):
     return hand_1, hand_2, bord, result 
 
 
+def get_hand_result(
+    hand_list: List[Hand],
+    bord: Bord,
+):
+    hand_results = [calc_max_combination(hand, bord) for hand in hand_list]
+    hand_value_results = np.array([it[0] for it in hand_results])
+    hand_kiker_results = np.array([it[1] for it in hand_results])
+
+    max_value_mask = hand_value_results == max(hand_value_results)
+    max_kiker_of_win_hand = max(hand_kiker_results[max_value_mask])
+    max_value_with_kiker = (
+        (hand_kiker_results == max_kiker_of_win_hand)
+        & max_value_mask
+    )
+
+    return np.where(max_value_with_kiker)[0] + 1
+
+
 if __name__ == '__main__':
     test_case_1_path = 'test_cases/test_case_1.txt'
     hand_1, hand_2, bord, result = read_test_case(test_case_1_path)
-    
+    hand_result = get_hand_result(
+        hand_list=[
+            hand_1,
+            hand_2,
+        ],
+        bord=bord
+    )
 
-# hand_1 = Hand(card_1=Card('2', 'S'), card_2=Card('J', 'S'))
-# hand_2 = Hand(card_1=Card('2', 'C'), card_2=Card('Q', 'S'))
-# bord = Bord(
-#     card_1=Card('2', 'D'),
-#     card_2=Card('10', 'S'),
-#     card_3=Card('K', 'S'),
-#     card_4=Card('4', 'D'),
-#     card_5=Card('3', 'H')
-# )
-
-# comb_rank_1, comb_cards_1, kiker_rank_1 = calc_max_combination(hand_1, bord)
-# comb_rank_2, comb_cards_2, kiker_rank_2 = calc_max_combination(hand_2, bord)
-
-# print(comb_rank_1)
-# print(kiker_rank_1)
-# for it in comb_cards_1:
-#     print(it)
-
-# print('-'*10)
-
-# print(comb_rank_2)
-# print(kiker_rank_2)
-# for it in comb_cards_2:
-#     print(it)
-
-# card_1 = parse_card(input('Первая карта в руке: '))
-# card_2 = parse_card(input('Вторая карта в руке: '))        
- 
-# print(card_1)
-# print(card_2)
-
-# card = Card('10', 'S')
-# card_list = [Card('2', 'S'), Card('10', 'S')]
-# print(card in card_list)
+    print(hand_result)
