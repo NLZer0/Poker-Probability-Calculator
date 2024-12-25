@@ -203,30 +203,42 @@ def parse_card(card_str: str):
     return card
 
 
-def read_test_case(file_name):
-    with open(file_name, 'r') as f:
-        test_data = f.read()
-        hands, bord, result = test_data.replace(' ', '').split('\n')
-        
-        hand_list = []
-        for hand in hands.split(';'):
-            hand_list.append(
-                Hand(*[
-                    Card(*it.split(':')) for it in hand.split(',')
-                ])
-            )
-
-        bord = [Card(*it.split(':')) for it in bord.split(',')]
-        bord = Bord(*bord)
-
-        result = [int(it) for it in result.split(',')]
-
+def parse_test_case(test_case: str):
+    try:
+        hands, bord, result = test_case.replace(' ', '').split('\n')
+    except:
+        pass
+    hand_list = []
+    for hand in hands.split(';'):
+        hand_list.append(
+            Hand(*[
+                Card(*it.split(':')) for it in hand.split(',')
+            ])
+        )
+    bord = [Card(*it.split(':')) for it in bord.split(',')]
+    bord = Bord(*bord)
+    result = [int(it) for it in result.split(',')]
     return hand_list, bord, result 
 
+
+def read_test_cases(file_name):
+    test_cases = []
+    with open(file_name, 'r') as f:
+        test_data = f.read().split('\n\n')
+        for test_case in test_data:
+            hand_list, bord, result = parse_test_case(test_case)
+            test_cases.append(dict(
+                hand_list=hand_list,
+                bord=bord,
+                result=result,
+            ))
+    return test_cases
+        
 
 def get_hand_result(
     hand_list: List[Hand],
     bord: Bord,
+    **args,
 ):
     hand_results = [calc_max_combination(hand, bord) for hand in hand_list]
     hand_value_results = np.array([it[0] for it in hand_results])
@@ -243,11 +255,11 @@ def get_hand_result(
 
 
 if __name__ == '__main__':
-    test_case_1_path = 'test_cases/test_case_1.txt'
-    hand_list, bord, result = read_test_case(test_case_1_path)
-    hand_result = get_hand_result(
-        hand_list=hand_list,
-        bord=bord
-    )
-
-    print(hand_result)
+    test_case_1_path = 'test_cases/test_cases_senior_card.txt'
+    test_cases = read_test_cases(test_case_1_path)
+    for i, test_case in enumerate(test_cases):
+        hand_result = get_hand_result(**test_case)
+        if set(hand_result) == set(test_case['result']):
+            print(f'Test {i+1} - passed!')
+        else:
+            print(f'Test {i+1} - failed!')
