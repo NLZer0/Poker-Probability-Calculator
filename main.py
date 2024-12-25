@@ -13,8 +13,18 @@ class Card:
         self.value = value
         self.suit = suit
     
+    def is_similar(self, other):
+        if isinstance(other, Card):
+            if (self.value == other.value) & (self.suit == other.suit): 
+                return True
+        return False
+
     def get_value_rank(self):
         return VALUE_COUNTS[self.value]
+
+    # Определение оператора in
+    def __contains__(self, card_list):
+        return any(self.is_similar(it) for it in card_list)
 
     # Определение оператора ==
     def __eq__(self, other):
@@ -57,6 +67,12 @@ class Hand:
     def __init__(self, card_1: Card, card_2: Card):
         self.card_1 = card_1
         self.card_2 = card_2
+    
+    def isin(self, card: Card):
+        if isinstance(card, Card):
+            if self.card_1.is_similar(card) | self.card_2.is_similar(card):
+                return True
+        return False
     
 class Bord:
     def __init__(
@@ -167,7 +183,18 @@ def calc_max_combination(hand: Hand, bord: Bord):
         comb_cards = trips_cards
         comb_rank = trips_rank
 
-    return comb_rank, comb_cards
+    if len(comb_cards) < 5:
+        non_usage_cards = []
+        for card in all_cards:
+            if card not in comb_cards:
+                non_usage_cards.append(card)
+        non_usage_cards = sorted(non_usage_cards, reverse=True)
+        
+        kikers_num = 5 - len(comb_cards)
+        kikers_cards = non_usage_cards[:kikers_num]
+        kiker_rank = int(''.join([str(get_card_value_rank(it.value)) for it in kikers_cards]))
+        
+    return comb_rank, comb_cards, kiker_rank
 
 
 def parse_card(card_str: str):
@@ -176,31 +203,37 @@ def parse_card(card_str: str):
     return card
 
 
-hand_1 = Hand(card_1=Card('2', 'S'), card_2=Card('10', 'S'))
-hand_2 = Hand(card_1=Card('K', 'D'), card_2=Card('Q', 'S'))
+hand_1 = Hand(card_1=Card('2', 'S'), card_2=Card('J', 'S'))
+hand_2 = Hand(card_1=Card('2', 'C'), card_2=Card('Q', 'S'))
 bord = Bord(
     card_1=Card('2', 'D'),
     card_2=Card('10', 'S'),
     card_3=Card('K', 'S'),
-    card_4=Card('Q', 'D'),
-    card_5=Card('2', 'H')
+    card_4=Card('4', 'D'),
+    card_5=Card('3', 'H')
 )
 
-comb_rank_1, comb_cards_1 = calc_max_combination(hand_1, bord)
-comb_rank_2, comb_cards_2 = calc_max_combination(hand_2, bord)
+comb_rank_1, comb_cards_1, kiker_rank_1 = calc_max_combination(hand_1, bord)
+comb_rank_2, comb_cards_2, kiker_rank_2 = calc_max_combination(hand_2, bord)
 
 print(comb_rank_1)
+print(kiker_rank_1)
 for it in comb_cards_1:
     print(it)
 
 print('-'*10)
+
 print(comb_rank_2)
+print(kiker_rank_2)
 for it in comb_cards_2:
     print(it)
-
 
 # card_1 = parse_card(input('Первая карта в руке: '))
 # card_2 = parse_card(input('Вторая карта в руке: '))        
  
 # print(card_1)
 # print(card_2)
+
+# card = Card('10', 'S')
+# card_list = [Card('2', 'S'), Card('10', 'S')]
+# print(card in card_list)
