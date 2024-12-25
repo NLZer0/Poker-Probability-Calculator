@@ -125,6 +125,26 @@ def pair_check(all_cards: List[Card]):
     return 0, []
 
 
+def trips_check(all_cards: List[Card]):
+    counter = Counter([card.value for card in all_cards])
+    trips_cards_value = np.array([item for item, value in counter.items() if value == 3])
+    trips_rank = np.array([get_card_value_rank(it) for it in trips_cards_value])
+
+    if len(trips_rank) == 0:
+        return 0, []
+    
+    max_trips_idx = 0
+    if len(trips_rank) > 1:
+        max_trips_idx = np.argmax(trips_rank)
+
+    trips_rank = trips_rank[max_trips_idx]
+    trips_cards_value = trips_cards_value[max_trips_idx]
+
+    trips_rank = trips_rank + 1313
+    trips_cards = [it for it in all_cards if it.value == trips_cards_value]
+    return trips_rank, trips_cards
+
+
 def calc_max_combination(hand: Hand, bord: Bord):
     comb_rank = 0
     comb_cards = set()
@@ -142,6 +162,11 @@ def calc_max_combination(hand: Hand, bord: Bord):
         comb_cards = pair_cards
         comb_rank = pair_rank
 
+    trips_rank, trips_cards = trips_check(all_cards)
+    if comb_rank < trips_rank:
+        comb_cards = trips_cards
+        comb_rank = trips_rank
+
     return comb_rank, comb_cards
 
 
@@ -151,11 +176,14 @@ def parse_card(card_str: str):
     return card
 
 
-hand_1 = Hand(card_1=Card('2', 'D'), card_2=Card('2', 'S'))
-hand_2 = Hand(card_1=Card('A', 'D'), card_2=Card('A', 'S'))
+hand_1 = Hand(card_1=Card('2', 'S'), card_2=Card('10', 'S'))
+hand_2 = Hand(card_1=Card('K', 'D'), card_2=Card('Q', 'S'))
 bord = Bord(
-    card_1=Card('K', 'D'),
-    card_2=Card('K', 'S')
+    card_1=Card('2', 'D'),
+    card_2=Card('10', 'S'),
+    card_3=Card('K', 'S'),
+    card_4=Card('Q', 'D'),
+    card_5=Card('2', 'H')
 )
 
 comb_rank_1, comb_cards_1 = calc_max_combination(hand_1, bord)
