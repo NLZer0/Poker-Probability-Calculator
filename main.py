@@ -206,18 +206,22 @@ def parse_card(card_str: str):
 def read_test_case(file_name):
     with open(file_name, 'r') as f:
         test_data = f.read()
-        hand_1, hand_2, bord, result = test_data.replace(' ', '').split('\n')
+        hands, bord, result = test_data.replace(' ', '').split('\n')
         
-        hand_1 = [Card(*it.split(':')) for it in hand_1.split(',')]
-        hand_2 = [Card(*it.split(':')) for it in hand_2.split(',')]
-        bord = [Card(*it.split(':')) for it in bord.split(',')]
-        result = [int(it) for it in result.split(',')]
+        hand_list = []
+        for hand in hands.split(';'):
+            hand_list.append(
+                Hand(*[
+                    Card(*it.split(':')) for it in hand.split(',')
+                ])
+            )
 
-        hand_1 = Hand(*hand_1)
-        hand_2 = Hand(*hand_2)
+        bord = [Card(*it.split(':')) for it in bord.split(',')]
         bord = Bord(*bord)
 
-    return hand_1, hand_2, bord, result 
+        result = [int(it) for it in result.split(',')]
+
+    return hand_list, bord, result 
 
 
 def get_hand_result(
@@ -240,12 +244,9 @@ def get_hand_result(
 
 if __name__ == '__main__':
     test_case_1_path = 'test_cases/test_case_1.txt'
-    hand_1, hand_2, bord, result = read_test_case(test_case_1_path)
+    hand_list, bord, result = read_test_case(test_case_1_path)
     hand_result = get_hand_result(
-        hand_list=[
-            hand_1,
-            hand_2,
-        ],
+        hand_list=hand_list,
         bord=bord
     )
 
