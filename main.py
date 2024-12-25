@@ -203,30 +203,52 @@ def parse_card(card_str: str):
     return card
 
 
-hand_1 = Hand(card_1=Card('2', 'S'), card_2=Card('J', 'S'))
-hand_2 = Hand(card_1=Card('2', 'C'), card_2=Card('Q', 'S'))
-bord = Bord(
-    card_1=Card('2', 'D'),
-    card_2=Card('10', 'S'),
-    card_3=Card('K', 'S'),
-    card_4=Card('4', 'D'),
-    card_5=Card('3', 'H')
-)
+def read_test_case(file_name):
+    with open(file_name, 'r') as f:
+        test_data = f.read()
+        hand_1, hand_2, bord, result = test_data.split('\n')
+        
+        hand_1 = [Card(list(it)) for it in hand_1.split(',')]
+        hand_2 = [Card(list(it)) for it in hand_2.split(',')]
+        bord = [Card(list(it)) for it in bord.split(',')]
+        result = int(result)
 
-comb_rank_1, comb_cards_1, kiker_rank_1 = calc_max_combination(hand_1, bord)
-comb_rank_2, comb_cards_2, kiker_rank_2 = calc_max_combination(hand_2, bord)
+        hand_1 = Hand(*hand_1)
+        hand_2 = Hand(*hand_2)
+        bord = Bord(*bord)
 
-print(comb_rank_1)
-print(kiker_rank_1)
-for it in comb_cards_1:
-    print(it)
+    return hand_1, hand_2, bord, result 
 
-print('-'*10)
 
-print(comb_rank_2)
-print(kiker_rank_2)
-for it in comb_cards_2:
-    print(it)
+if __name__ == '__main__':
+    test_case_1_path = 'test_cases/test_case_1.txt'
+    hand_1, hand_2, bord, result = read_test_case(test_case_1_path)
+    
+
+# hand_1 = Hand(card_1=Card('2', 'S'), card_2=Card('J', 'S'))
+# hand_2 = Hand(card_1=Card('2', 'C'), card_2=Card('Q', 'S'))
+# bord = Bord(
+#     card_1=Card('2', 'D'),
+#     card_2=Card('10', 'S'),
+#     card_3=Card('K', 'S'),
+#     card_4=Card('4', 'D'),
+#     card_5=Card('3', 'H')
+# )
+
+# comb_rank_1, comb_cards_1, kiker_rank_1 = calc_max_combination(hand_1, bord)
+# comb_rank_2, comb_cards_2, kiker_rank_2 = calc_max_combination(hand_2, bord)
+
+# print(comb_rank_1)
+# print(kiker_rank_1)
+# for it in comb_cards_1:
+#     print(it)
+
+# print('-'*10)
+
+# print(comb_rank_2)
+# print(kiker_rank_2)
+# for it in comb_cards_2:
+#     print(it)
 
 # card_1 = parse_card(input('Первая карта в руке: '))
 # card_2 = parse_card(input('Вторая карта в руке: '))        
