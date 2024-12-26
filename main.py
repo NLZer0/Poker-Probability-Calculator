@@ -161,6 +161,44 @@ def trips_check(all_cards: List[Card]):
     return trips_rank, trips_cards
 
 
+def straight_check(all_cards: List[Card]):
+    unique_card_values = np.array(list(set([it.value for it in all_cards])))
+    unique_card_rank = np.array([get_card_value_rank(it) for it in unique_card_values])
+    sorted_idx = np.argsort(unique_card_rank)
+    unique_card_rank = unique_card_rank[sorted_idx]
+    unique_card_values = unique_card_values[sorted_idx]
+    
+    if 'A' in unique_card_values:
+        unique_card_values = np.insert(unique_card_values, 0, 'A')
+        unique_card_rank = np.insert(unique_card_rank, 0, 0)
+
+    ordered_cards = 1
+    straight_card_values = [unique_card_values[0]]
+    for i in range(1, len(unique_card_values)):
+        value_diff = unique_card_rank[i] - unique_card_rank[i-1]
+        if value_diff == 1:
+            ordered_cards += 1
+            straight_card_values.append(unique_card_values[i])
+        else:
+            if ordered_cards < 5:
+                ordered_cards = 0
+                straight_card_values = [unique_card_values[i]]
+
+    if ordered_cards < 5:
+        return 0, []
+    
+    strit_rank = get_card_value_rank(straight_card_values[-1])
+    strit_rank += 13 + 1313 # more than high set
+
+    straight_cards = []
+    for value in straight_card_values[-5:]:
+        for card in all_cards:
+            if card.value == value:
+                straight_cards.append(card)
+    
+    return strit_rank, straight_cards
+
+
 def calc_max_combination(hand: Hand, bord: Bord):
     comb_rank = 0
     comb_cards = set()
@@ -183,6 +221,12 @@ def calc_max_combination(hand: Hand, bord: Bord):
         comb_cards = trips_cards
         comb_rank = trips_rank
 
+    straight_rank, straight_cards = straight_check(all_cards)
+    if comb_rank < straight_rank:
+        comb_cards = straight_cards
+        comb_rank = straight_rank
+    
+    kiker_rank = 0
     if len(comb_cards) < 5:
         non_usage_cards = []
         for card in all_cards:
@@ -255,7 +299,7 @@ def get_hand_result(
 
 
 if __name__ == '__main__':
-    test_case_1_path = 'test_cases/test_cases_pair_dual_pair.txt'
+    test_case_1_path = 'test_cases/test_cases_straight.txt'
     test_cases = read_test_cases(test_case_1_path)
     for i, test_case in enumerate(test_cases):
         hand_result = get_hand_result(**test_case)
