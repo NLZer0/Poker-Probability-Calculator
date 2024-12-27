@@ -4,7 +4,7 @@ from collections import Counter
 import numpy as np
 
 from poc.pocl import Card, Bord, Hand 
-from const import VALUE_COUNTS
+from poc.const import VALUE_COUNTS
 
 def get_card_value_rank(card_value: str):
     return VALUE_COUNTS[card_value]
@@ -185,46 +185,55 @@ def calc_max_combination(hand: Hand, bord: Bord):
     
     all_cards = [hand.card_1, hand.card_2] + bord.get_card_list()
     all_cards = list(filter(lambda x: (x.value is not None) and (x.suit is not None), all_cards))
-    
+    max_combination = None
+
     senior_card_rank, senior_card = senior_card_check(all_cards)
     if comb_rank < senior_card_rank:
         comb_rank = senior_card_rank
         comb_cards = set([senior_card])
+        max_combination = 'senior'
 
     pair_rank, pair_cards = pair_check(all_cards)
     if comb_rank < pair_rank:
         comb_cards = pair_cards
         comb_rank = pair_rank
+        max_combination = 'pair' if len(pair_cards) < 3 else 'dual_pair'
 
     trips_rank, trips_cards = trips_check(all_cards)
     if comb_rank < trips_rank:
         comb_cards = trips_cards
         comb_rank = trips_rank
+        max_combination = 'triplet'
 
     straight_rank, straight_cards = straight_check(all_cards)
     if comb_rank < straight_rank:
         comb_cards = straight_cards
         comb_rank = straight_rank
+        max_combination = 'straight'
     
     flush_rank, flush_cards = flush_check(all_cards)
     if comb_rank < flush_rank:
         comb_cards = flush_cards
         comb_rank = flush_rank
+        max_combination = 'flush'
 
     full_house_rank, full_house_cards = check_full_house(all_cards)
     if comb_rank < full_house_rank:
         comb_cards = full_house_cards
         comb_rank = full_house_rank
+        max_combination = 'full_house'
 
     square_rank, square_cards = check_square(all_cards)
     if comb_rank < square_rank:
         comb_cards = square_cards
         comb_rank = square_rank
+        max_combination = 'square'
 
     straight_flush_rank, straight_flush_cards = check_straight_flush(all_cards)
     if comb_rank < straight_flush_rank:
         comb_cards = straight_flush_cards
-        comb_rank = straight_flush_rank 
+        comb_rank = straight_flush_rank
+        max_combination = 'straight_flush'
 
     kiker_rank = 0
     if len(comb_cards) < 5:
@@ -238,7 +247,7 @@ def calc_max_combination(hand: Hand, bord: Bord):
         kikers_cards = non_usage_cards[:kikers_num]
         kiker_rank = int(''.join([str(get_card_value_rank(it.value)) for it in kikers_cards]))
         
-    return comb_rank, kiker_rank
+    return comb_rank, kiker_rank, max_combination
 
 
 def parse_card(card_str: str):

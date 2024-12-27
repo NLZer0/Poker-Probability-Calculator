@@ -1,4 +1,4 @@
-from const import VALUE_COUNTS, SUITS
+from poc.const import VALUE_COUNTS, SUITS
 
 class Card:
     def __init__(self, value:str = None, suit:str = None):
