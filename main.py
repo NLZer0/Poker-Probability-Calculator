@@ -247,10 +247,27 @@ def check_square(all_cards: List[Card]):
 
     square_cards_value = square_cards_value[0]
     square_cards = [it for it in all_cards if it.value == square_cards_value]
-    square_rank = str(get_card_value_rank(square_cards_value))
-    square_rank = '0'+square_rank if len(square_rank) < 2 else square_rank
-    square_rank = int(square_rank + '13'*7)
+    square_rank = get_card_value_rank(square_cards_value)
+    square_rank = square_rank + int('13'*7)
     return square_rank, square_cards
+
+
+def check_straight_flush(all_cards: List[Card]):
+    # calc all flush card
+    counter = Counter([card.suit for card in all_cards])
+    flush_suit = np.array([item for item, value in counter.items() if value > 4])
+    if len(flush_suit) == 0:
+        return 0, []
+    
+    flush_suit = flush_suit[0] # can be only one flush
+    flush_cards = [it for it in all_cards if it.suit == flush_suit]
+
+    straight_rank, straight_cards = straight_check(flush_cards)
+    if len(straight_cards) == 0:
+        return 0, []
+
+    straight_flush_rank = straight_rank + int('13'*7) + 13
+    return straight_flush_rank, straight_cards
 
 
 def calc_max_combination(hand: Hand, bord: Bord):
@@ -294,6 +311,11 @@ def calc_max_combination(hand: Hand, bord: Bord):
     if comb_rank < square_rank:
         comb_cards = square_cards
         comb_rank = square_rank
+
+    straight_flush_rank, straight_flush_cards = check_straight_flush(all_cards)
+    if comb_rank < straight_flush_rank:
+        comb_cards = straight_flush_cards
+        comb_rank = straight_flush_rank 
 
     kiker_rank = 0
     if len(comb_cards) < 5:
