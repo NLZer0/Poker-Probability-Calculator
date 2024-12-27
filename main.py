@@ -239,6 +239,20 @@ def check_full_house(all_cards: List[Card]):
     return full_house_rank, full_house_cards
 
 
+def check_square(all_cards: List[Card]):
+    counter = Counter([card.value for card in all_cards])
+    square_cards_value = np.array([item for item, value in counter.items() if value == 4])
+    if len(square_cards_value) == 0:
+        return 0, []
+
+    square_cards_value = square_cards_value[0]
+    square_cards = [it for it in all_cards if it.value == square_cards_value]
+    square_rank = str(get_card_value_rank(square_cards_value))
+    square_rank = '0'+square_rank if len(square_rank) < 2 else square_rank
+    square_rank = int(square_rank + '13'*7)
+    return square_rank, square_cards
+
+
 def calc_max_combination(hand: Hand, bord: Bord):
     comb_rank = 0
     comb_cards = set()
@@ -275,6 +289,11 @@ def calc_max_combination(hand: Hand, bord: Bord):
     if comb_rank < full_house_rank:
         comb_cards = full_house_cards
         comb_rank = full_house_rank
+
+    square_rank, square_cards = check_square(all_cards)
+    if comb_rank < square_rank:
+        comb_cards = square_cards
+        comb_rank = square_rank
 
     kiker_rank = 0
     if len(comb_cards) < 5:
