@@ -1,4 +1,4 @@
-import argparse
+import os
 from typing import List
 from collections import Counter
 from const import VALUE_COUNTS, SUITS
@@ -115,13 +115,13 @@ def senior_card_check(all_cards: List[Card]):
 
 def pair_check(all_cards: List[Card]):
     counter = Counter([card.value for card in all_cards])
-    pair_cards = np.array([item for item, value in counter.items() if value == 2])
+    pair_cards = np.array([item for item, value in counter.items() if value > 1])
     pair_rank = np.array([get_card_value_rank(it) for it in pair_cards])
     
     if len(pair_cards) == 1:
         pair_rank = pair_rank[0] + get_card_value_rank('A')
         pair_cards = [it for it in all_cards if it.value == pair_cards[0]]
-        assert len(pair_cards) == 2, 'Ошибка при подсчете пар'
+        assert len(pair_cards) > 1, 'Ошибка при подсчете пар'
         return pair_rank, pair_cards
 
     if len(pair_cards) >= 2:
@@ -210,7 +210,34 @@ def flush_check(all_cards: List[Card]):
     sorted_flush_cards = sorted(flush_cards, reverse=True)[:5] # use 5 max card values
     flush_rank = ''.join([str(get_card_value_rank(it.value)) for it in sorted_flush_cards])
     return int(flush_rank), sorted_flush_cards
+
+
+def check_full_house(all_cards: List[Card]):
+    _, pair_cards = pair_check(all_cards) 
+    _, trips_cards = trips_check(all_cards)
+
+    if (len(pair_cards) == 0) | (len(trips_cards) == 0):
+        return 0, []
+
+    pair_value = np.array(list(set([it.value for it in pair_cards]))) # get value of all pairs
+    trips_value = max(list(set([it.value for it in trips_cards]))) # get only one value of trips
+    pair_value = pair_value[pair_value != trips_value] # drop pair if it is a trips
+    if len(pair_value) == 0:
+        return 0, []
     
+    pair_value = max(pair_value) # get max pair
+
+    full_house_cards = [it for it in all_cards if (it.value == pair_value) | (it.value == trips_value)]
+    pair_rank = str(get_card_value_rank(pair_value))
+    trips_rank = str(get_card_value_rank(trips_value))
+
+    pair_rank = '0'+pair_rank if len(pair_rank) < 2 else pair_rank
+    trips_rank = '0'+trips_rank if len(trips_rank) < 2 else trips_rank
+
+    full_house_rank = str(trips_rank) + str(pair_rank) + '13'*5 # more than max flush
+    full_house_rank = int(full_house_rank)
+    return full_house_rank, full_house_cards
+
 
 def calc_max_combination(hand: Hand, bord: Bord):
     comb_rank = 0
@@ -243,6 +270,11 @@ def calc_max_combination(hand: Hand, bord: Bord):
     if comb_rank < flush_rank:
         comb_cards = flush_cards
         comb_rank = flush_rank
+
+    full_house_rank, full_house_cards = check_full_house(all_cards)
+    if comb_rank < full_house_rank:
+        comb_cards = full_house_cards
+        comb_rank = full_house_rank
 
     kiker_rank = 0
     if len(comb_cards) < 5:
@@ -317,12 +349,16 @@ def get_hand_result(
 
 
 if __name__ == '__main__':
-    test_case_1_path = 'test_cases/test_cases_flush.txt'
-    test_cases = read_test_cases(test_case_1_path)
-    for i, test_case in enumerate(test_cases):
-        hand_result = get_hand_result(**test_case)
-        if set(hand_result) == set(test_case['result']):
-            print(f'Test {i+1} - passed!')
-        else:
-            print(f'Test {i+1} - failed!')
-            
+    test_files = os.listdir('test_cases')
+    for test_file in test_files:
+        print('\n' + '-'*30)
+        print(test_file)
+        print('-'*30)
+
+        test_cases = read_test_cases(f'test_cases/{test_file}')
+        for i, test_case in enumerate(test_cases):
+            hand_result = get_hand_result(**test_case)
+            if set(hand_result) == set(test_case['result']):
+                print(f'Test {i+1} - passed!')
+            else:
+                print(f'Test {i+1} - failed!')
