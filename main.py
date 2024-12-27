@@ -299,7 +299,7 @@ def get_hand_result(
 
 
 if __name__ == '__main__':
-    test_case_1_path = 'test_cases/test_cases_straight.txt'
+    test_case_1_path = 'test_cases/new_ai_max_straight.txt'
     test_cases = read_test_cases(test_case_1_path)
     for i, test_case in enumerate(test_cases):
         hand_result = get_hand_result(**test_case)
