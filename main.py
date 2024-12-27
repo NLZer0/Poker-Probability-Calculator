@@ -199,6 +199,19 @@ def straight_check(all_cards: List[Card]):
     return strit_rank, straight_cards
 
 
+def flush_check(all_cards: List[Card]):
+    counter = Counter([card.suit for card in all_cards])
+    flush_suit = np.array([item for item, value in counter.items() if value > 4])
+    if len(flush_suit) == 0:
+        return 0, []
+    
+    flush_suit = flush_suit[0] # can be only one flush
+    flush_cards = [it for it in all_cards if it.suit == flush_suit]
+    sorted_flush_cards = sorted(flush_cards, reverse=True)[:5] # use 5 max card values
+    flush_rank = ''.join([str(get_card_value_rank(it.value)) for it in sorted_flush_cards])
+    return int(flush_rank), sorted_flush_cards
+    
+
 def calc_max_combination(hand: Hand, bord: Bord):
     comb_rank = 0
     comb_cards = set()
@@ -226,6 +239,11 @@ def calc_max_combination(hand: Hand, bord: Bord):
         comb_cards = straight_cards
         comb_rank = straight_rank
     
+    flush_rank, flush_cards = flush_check(all_cards)
+    if comb_rank < flush_rank:
+        comb_cards = flush_cards
+        comb_rank = flush_rank
+
     kiker_rank = 0
     if len(comb_cards) < 5:
         non_usage_cards = []
@@ -299,7 +317,7 @@ def get_hand_result(
 
 
 if __name__ == '__main__':
-    test_case_1_path = 'test_cases/new_ai_max_straight.txt'
+    test_case_1_path = 'test_cases/test_cases_flush.txt'
     test_cases = read_test_cases(test_case_1_path)
     for i, test_case in enumerate(test_cases):
         hand_result = get_hand_result(**test_case)
