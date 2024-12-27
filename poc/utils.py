@@ -90,6 +90,8 @@ def straight_check(all_cards: List[Card]):
             if ordered_cards < 5:
                 ordered_cards = 1
                 straight_card_values = [unique_card_values[i]]
+            else:
+                break
 
     if ordered_cards < 5:
         return 0, []
