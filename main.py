@@ -181,7 +181,7 @@ def straight_check(all_cards: List[Card]):
             straight_card_values.append(unique_card_values[i])
         else:
             if ordered_cards < 5:
-                ordered_cards = 0
+                ordered_cards = 1
                 straight_card_values = [unique_card_values[i]]
 
     if ordered_cards < 5:
@@ -395,7 +395,7 @@ if __name__ == '__main__':
         print('\n' + '-'*30)
         print(test_file)
         print('-'*30)
-
+        
         test_cases = read_test_cases(f'test_cases/{test_file}')
         for i, test_case in enumerate(test_cases):
             hand_result = get_hand_result(**test_case)
