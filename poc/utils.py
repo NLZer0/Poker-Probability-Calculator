@@ -17,7 +17,7 @@ def senior_card_check(all_cards: List[Card]):
         if senior_card_rank < card.get_value_rank():
             senior_card_rank = card.get_value_rank()
             senior_card = card
-    return senior_card_rank, senior_card
+    return senior_card_rank, set([senior_card]), 'senior'
     
 
 def pair_check(all_cards: List[Card]):
@@ -29,7 +29,7 @@ def pair_check(all_cards: List[Card]):
         pair_rank = pair_rank[0] + get_card_value_rank('A')
         pair_cards = [it for it in all_cards if it.value == pair_cards[0]]
         assert len(pair_cards) > 1, 'Ошибка при подсчете пар'
-        return pair_rank, pair_cards
+        return pair_rank, pair_cards, 'pair'
 
     if len(pair_cards) >= 2:
         max_rank_pairs = np.argsort(-1*pair_rank)[:2]
@@ -43,9 +43,9 @@ def pair_check(all_cards: List[Card]):
         
         pair_rank = int(c1_rank+c2_rank)
         pair_cards = [it for it in all_cards if (it.value == pair_cards[0]) | (it.value == pair_cards[1])]
-        return pair_rank, pair_cards
+        return pair_rank, pair_cards, 'pair'
     
-    return 0, []
+    return 0, [], 'pair'
 
 
 def trips_check(all_cards: List[Card]):
@@ -54,7 +54,7 @@ def trips_check(all_cards: List[Card]):
     trips_rank = np.array([get_card_value_rank(it) for it in trips_cards_value])
 
     if len(trips_rank) == 0:
-        return 0, []
+        return 0, [], 'triplet'
     
     max_trips_idx = 0
     if len(trips_rank) > 1:
@@ -65,7 +65,7 @@ def trips_check(all_cards: List[Card]):
 
     trips_rank = trips_rank + 1313
     trips_cards = [it for it in all_cards if it.value == trips_cards_value]
-    return trips_rank, trips_cards
+    return trips_rank, trips_cards, 'triplet'
 
 
 def straight_check(all_cards: List[Card]):
@@ -94,7 +94,7 @@ def straight_check(all_cards: List[Card]):
                 break
 
     if ordered_cards < 5:
-        return 0, []
+        return 0, [], 'straight'
     
     strit_rank = get_card_value_rank(straight_card_values[-1])
     strit_rank += 13 + 1313 # more than high set
@@ -105,34 +105,34 @@ def straight_check(all_cards: List[Card]):
             if card.value == value:
                 straight_cards.append(card)
     
-    return strit_rank, straight_cards
+    return strit_rank, straight_cards, 'straight'
 
 
 def flush_check(all_cards: List[Card]):
     counter = Counter([card.suit for card in all_cards])
     flush_suit = np.array([item for item, value in counter.items() if value > 4])
     if len(flush_suit) == 0:
-        return 0, []
+        return 0, [], 'flush'
     
     flush_suit = flush_suit[0] # can be only one flush
     flush_cards = [it for it in all_cards if it.suit == flush_suit]
     sorted_flush_cards = sorted(flush_cards, reverse=True)[:5] # use 5 max card values
     flush_rank = ''.join([str(get_card_value_rank(it.value)) for it in sorted_flush_cards])
-    return int(flush_rank), sorted_flush_cards
+    return int(flush_rank), sorted_flush_cards, 'flush'
 
 
 def check_full_house(all_cards: List[Card]):
-    _, pair_cards = pair_check(all_cards) 
-    _, trips_cards = trips_check(all_cards)
+    _, pair_cards, _ = pair_check(all_cards) 
+    _, trips_cards, _ = trips_check(all_cards)
 
     if (len(pair_cards) == 0) | (len(trips_cards) == 0):
-        return 0, []
+        return 0, [], 'full_house'
 
     pair_value = np.array(list(set([it.value for it in pair_cards]))) # get value of all pairs
     trips_value = max(list(set([it.value for it in trips_cards]))) # get only one value of trips
     pair_value = pair_value[pair_value != trips_value] # drop pair if it is a trips
     if len(pair_value) == 0:
-        return 0, []
+        return 0, [], 'full_house'
     
     pair_value = max(pair_value) # get max pair
 
@@ -145,20 +145,20 @@ def check_full_house(all_cards: List[Card]):
 
     full_house_rank = str(trips_rank) + str(pair_rank) + '13'*5 # more than max flush
     full_house_rank = int(full_house_rank)
-    return full_house_rank, full_house_cards
+    return full_house_rank, full_house_cards, 'full_house'
 
 
 def check_square(all_cards: List[Card]):
     counter = Counter([card.value for card in all_cards])
     square_cards_value = np.array([item for item, value in counter.items() if value == 4])
     if len(square_cards_value) == 0:
-        return 0, []
+        return 0, [], 'square'
 
     square_cards_value = square_cards_value[0]
     square_cards = [it for it in all_cards if it.value == square_cards_value]
     square_rank = get_card_value_rank(square_cards_value)
     square_rank = square_rank + int('13'*7)
-    return square_rank, square_cards
+    return square_rank, square_cards, 'square'
 
 
 def check_straight_flush(all_cards: List[Card]):
@@ -166,17 +166,17 @@ def check_straight_flush(all_cards: List[Card]):
     counter = Counter([card.suit for card in all_cards])
     flush_suit = np.array([item for item, value in counter.items() if value > 4])
     if len(flush_suit) == 0:
-        return 0, []
+        return 0, [], 'straight_flush'
     
     flush_suit = flush_suit[0] # can be only one flush
     flush_cards = [it for it in all_cards if it.suit == flush_suit]
 
-    straight_rank, straight_cards = straight_check(flush_cards)
+    straight_rank, straight_cards, _ = straight_check(flush_cards)
     if len(straight_cards) == 0:
-        return 0, []
+        return 0, [], 'straight_flush'
 
     straight_flush_rank = straight_rank + int('13'*7) + 13
-    return straight_flush_rank, straight_cards
+    return straight_flush_rank, straight_cards, 'straight_flush'
 
 
 def calc_max_combination(hand: Hand, bord: Bord):
@@ -187,53 +187,23 @@ def calc_max_combination(hand: Hand, bord: Bord):
     all_cards = list(filter(lambda x: (x.value is not None) and (x.suit is not None), all_cards))
     max_combination = None
 
-    senior_card_rank, senior_card = senior_card_check(all_cards)
-    if comb_rank < senior_card_rank:
-        comb_rank = senior_card_rank
-        comb_cards = set([senior_card])
-        max_combination = 'senior'
+    combination_func_list = [
+        senior_card_check,
+        pair_check,
+        trips_check,
+        straight_check,
+        flush_check,
+        check_full_house,
+        check_square,
+        check_straight_flush,
+    ]
 
-    pair_rank, pair_cards = pair_check(all_cards)
-    if comb_rank < pair_rank:
-        comb_cards = pair_cards
-        comb_rank = pair_rank
-        max_combination = 'pair' if len(pair_cards) < 3 else 'dual_pair'
-
-    trips_rank, trips_cards = trips_check(all_cards)
-    if comb_rank < trips_rank:
-        comb_cards = trips_cards
-        comb_rank = trips_rank
-        max_combination = 'triplet'
-
-    straight_rank, straight_cards = straight_check(all_cards)
-    if comb_rank < straight_rank:
-        comb_cards = straight_cards
-        comb_rank = straight_rank
-        max_combination = 'straight'
-    
-    flush_rank, flush_cards = flush_check(all_cards)
-    if comb_rank < flush_rank:
-        comb_cards = flush_cards
-        comb_rank = flush_rank
-        max_combination = 'flush'
-
-    full_house_rank, full_house_cards = check_full_house(all_cards)
-    if comb_rank < full_house_rank:
-        comb_cards = full_house_cards
-        comb_rank = full_house_rank
-        max_combination = 'full_house'
-
-    square_rank, square_cards = check_square(all_cards)
-    if comb_rank < square_rank:
-        comb_cards = square_cards
-        comb_rank = square_rank
-        max_combination = 'square'
-
-    straight_flush_rank, straight_flush_cards = check_straight_flush(all_cards)
-    if comb_rank < straight_flush_rank:
-        comb_cards = straight_flush_cards
-        comb_rank = straight_flush_rank
-        max_combination = 'straight_flush'
+    for combination_func in combination_func_list:
+        rank, cards, combination = combination_func(all_cards)
+        if comb_rank < rank:
+            comb_rank = rank
+            comb_cards = cards
+            max_combination = combination
 
     kiker_rank = 0
     if len(comb_cards) < 5:
