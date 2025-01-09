@@ -1,4 +1,30 @@
+import random
+from itertools import product
 from poc.const import VALUE_COUNTS, SUITS
+
+
+class Deck:
+    def __init__(self):
+        self.shuffle_cards()
+    
+    def get_rand_card(self):
+        rand_card = random.choice(list(self.cards))
+        self.cards.discard(rand_card)
+        return rand_card
+
+    def get_card(self, value: str, suit: str):
+        try:
+            self.cards.remove(Card(value, suit))
+            return Card(value, suit)
+        except:
+            return None
+
+    def shuffle_cards(self):
+        self.cards = set()
+        for value, suit in product(VALUE_COUNTS, SUITS):
+            if (value is not None) & (suit is not None):
+                self.cards.add(Card(value, suit))
+
 
 class Card:
     def __init__(self, value:str = None, suit:str = None):
